@@ -9,7 +9,13 @@ mod tests {
 }
 
 pub mod bunnycdn_storage {
+    extern crate reqwest;
+    use reqwest::Error;
+    use reqwest::multipart;
+    use serde::{Deserialize, Serialize};
     use std::fs;
+
+    const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
     #[derive(Debug)]
     struct StorageZone {
@@ -17,6 +23,7 @@ pub mod bunnycdn_storage {
         api_key: String,
     }
 
+    #[derive(Debug, Serialize, Deserialize)]
     struct StorageObject {
         guid: String,
         user_id: String,
@@ -36,42 +43,90 @@ pub mod bunnycdn_storage {
         pub fn new(name: String, api_key: String) -> Self {
             StorageZone { name, api_key }
         }
-        pub fn upload_file(&self, file_path: String, object_url: String) -> String {
-            let contents =
-                fs::read_to_string(file_path).expect("Something went wrong reading the file");
-            //network PUT file contents
-            //AccessKey: self.api_key
-            "ok".to_string()
-        }
-        pub fn download_file(&self, file_path: String, object_url: String) -> String {
-            //network GET file contents
-            let contents =
-                fs::write(file_path, "test").expect("Something went wrong writing the file");
+        // pub fn copy(&self) -> Self {
+        //     StorageZone { name: self.name.clone(), api_key: self.api_key.clone() }
+        // }
 
-            "ok/404".to_string()
-        }
+        pub async fn upload_file(&self, file_path: String, object_url: String) -> Result<(), reqwest::Error> {
+            let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
+            println!("{}", request_url);
 
-        pub fn get_objects(&self, directory_url: String) -> StorageObject {
-            //network GET file contents
-            StorageObject {
-                guid: "".to_string(),
-                user_id: "".to_string(),
-                date_created: "".to_string(),
-                last_changed: "".to_string(),
-                storage_zone_name: "".to_string(),
-                path: "".to_string(),
-                object_name: "".to_string(),
-                length: 0,
-                is_directory: false,
-                server_id: "".to_string(),
-                storage_zone_id: "".to_string(),
-                full_path: "".to_string(),
-            }
+            let file_contents =
+                fs::read(file_path).expect("Something went wrong reading the file");
+
+            let chunk = multipart::Part::bytes(file_contents);
+
+            let form = multipart::Form::new()
+                .part("chunk", chunk);
+
+            let response = reqwest::Client::new()
+                .put(&request_url)
+                .header("AccessKey", &self.api_key)
+                .multipart(form)
+                .send()
+                .await?;
+            Ok(())
         }
 
-        pub fn delete_object(object_url: String) -> String {
-            //network DELETE
-            "unimplemented".to_string()
+        pub async fn download_file(
+            &self,
+            file_path: String,
+            object_url: String,
+        ) -> Result<(), reqwest::Error> {
+            let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
+            println!("{}", request_url);
+
+            let data = reqwest::Client::new()
+                .get(&request_url)
+                .header("AccessKey", &self.api_key)
+                .send()
+                .await?
+                .text()
+                .await?;
+            fs::write(file_path, data).expect("Something went wrong writing the file");
+            Ok(())
+        }
+
+        pub async fn get_objects(
+            &self,
+            directory_url: String,
+        ) -> Result<StorageObject, reqwest::Error> {
+            let request_url = format!("SERVER_URL/{}/{}", self.name, directory_url);
+
+            println!("{}", request_url);
+
+            // let mut response = reqwest::get(&request_url).await?;
+            // println!("Status: {}", response.status());
+            // let storage_object: StorageObject = response.json().await?;
+            // // let body = response.text().await?;
+            // // println!("Body:\n\n{}", body);
+            // println!("storage_object:\n\n{:?}", storage_object);
+            // Ok(())
+
+            let storage_object: StorageObject = reqwest::Client::new()
+                .get(&request_url)
+                .header("AccessKey", &self.api_key)
+                .send()
+                .await?
+                .json()
+                .await?;
+            println!("storage_object:\n\n{:?}", storage_object);
+            Ok(storage_object)
+        }
+
+        pub async fn delete_object(
+            &self,
+            object_url: String,
+        ) -> Result<reqwest::Response, reqwest::Error> {
+            let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
+            println!("{}", request_url);
+
+            let response = reqwest::Client::new()
+                .delete(&request_url)
+                .header("AccessKey", &self.api_key)
+                .send()
+                .await?;
+            Ok(response)
         }
     }
 }
