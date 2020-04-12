@@ -10,8 +10,8 @@ mod tests {
 
 pub mod bunnycdn_storage {
     extern crate reqwest;
-    use reqwest::Error;
     use reqwest::multipart;
+    use reqwest::Error;
     use serde::{Deserialize, Serialize};
     use std::fs;
 
@@ -44,17 +44,19 @@ pub mod bunnycdn_storage {
             StorageZone { name, api_key }
         }
 
-        pub async fn upload_file(&self, file_path: String, object_url: String) -> Result<(), reqwest::Error> {
+        pub async fn upload_file(
+            &self,
+            file_path: String,
+            object_url: String,
+        ) -> Result<(), reqwest::Error> {
             let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
             println!("{}", request_url);
 
-            let file_contents =
-                fs::read(file_path).expect("Something went wrong reading the file");
+            let file_contents = fs::read(file_path).expect("Something went wrong reading the file");
 
             let chunk = multipart::Part::bytes(file_contents);
 
-            let form = multipart::Form::new()
-                .part("chunk", chunk);
+            let form = multipart::Form::new().part("chunk", chunk);
 
             let response = reqwest::Client::new()
                 .put(&request_url)
