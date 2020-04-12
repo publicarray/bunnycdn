@@ -43,9 +43,6 @@ pub mod bunnycdn_storage {
         pub fn new(name: String, api_key: String) -> Self {
             StorageZone { name, api_key }
         }
-        // pub fn copy(&self) -> Self {
-        //     StorageZone { name: self.name.clone(), api_key: self.api_key.clone() }
-        // }
 
         pub async fn upload_file(&self, file_path: String, object_url: String) -> Result<(), reqwest::Error> {
             let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
@@ -92,16 +89,7 @@ pub mod bunnycdn_storage {
             directory_url: String,
         ) -> Result<StorageObject, reqwest::Error> {
             let request_url = format!("SERVER_URL/{}/{}", self.name, directory_url);
-
             println!("{}", request_url);
-
-            // let mut response = reqwest::get(&request_url).await?;
-            // println!("Status: {}", response.status());
-            // let storage_object: StorageObject = response.json().await?;
-            // // let body = response.text().await?;
-            // // println!("Body:\n\n{}", body);
-            // println!("storage_object:\n\n{:?}", storage_object);
-            // Ok(())
 
             let storage_object: StorageObject = reqwest::Client::new()
                 .get(&request_url)
