@@ -4,6 +4,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
+use std::error::Error;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
@@ -48,7 +49,7 @@ impl StorageZone {
         &self,
         file_path: &str,
         object_url: &str,
-    ) -> Result<(), reqwest::Error> {
+    ) -> Result<(), Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
@@ -60,7 +61,7 @@ impl StorageZone {
             .await?;
         if response.status() == 200 {
             let data = response.text().await?;
-            fs::write(file_path, data).expect("Something went wrong writing the file");
+            fs::write(file_path, data)?;
         } else {
             let data: GetResponse = response.json().await?;
             println!("{:?}", data);
@@ -72,7 +73,7 @@ impl StorageZone {
         &self,
         file_path: &str,
         object_url: &str,
-    ) -> Result<reqwest::StatusCode, reqwest::Error> {
+    ) -> Result<reqwest::StatusCode, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         let pwd = env::current_dir().unwrap();
         println!(
@@ -81,7 +82,7 @@ impl StorageZone {
             pwd.display(),
             file_path
         );
-        let file_contents = fs::read(file_path).expect("Something went wrong reading the file");
+        let file_contents = fs::read(file_path)?;
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
             .put(&request_url)
@@ -133,4 +134,3 @@ impl StorageZone {
         Ok(())
     }
 }
-
