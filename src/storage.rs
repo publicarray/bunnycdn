@@ -3,8 +3,8 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::fs;
 use std::error::Error;
+use std::fs;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
@@ -120,17 +120,12 @@ impl StorageZone {
         println!("response:\n\n{:?}", response.status());
         let status = response.status();
         if status == 200 {
-            // {
-            //     let data = &response.text().await?;
-            //     println!("{:?}", data);
-            // }
             let data: Vec<Option<StorageObject>> = response.json().await?;
             println!("{:?}", data);
         } else {
             let data = response.text().await?;
             println!("{} - {:?}", status, data);
         }
-
         Ok(())
     }
 }
