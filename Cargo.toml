@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 repository = "https://github.com/publicarray/bunnycdn"
 description = """
-API for BunnyCDN storage buckets
+API for BunnyCDN
 """
 
 [dependencies]
