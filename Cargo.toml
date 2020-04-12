@@ -3,8 +3,14 @@ name = "bunnycdn-storage"
 version = "0.1.0"
 authors = ["Sebastian Schmidt <publicarray@users.noreply.github.com>"]
 edition = "2018"
+license = "MIT"
+repository = "https://github.com/publicarray/bunnycdn-storage"
+description = """
+API for BunnyCDN storage buckets
+"""
 
 [dependencies]
 reqwest = { version = "0.10", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "0.2", features = ["full"] }
+# tokio = { version = "0.2.0", features = ["full"] }
+tokio = { version = "0.2.0", features = ["blocking", "macros", "net"] }
