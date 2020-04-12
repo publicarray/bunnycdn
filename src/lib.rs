@@ -1,13 +1,12 @@
 #![allow(unused)]
 
-extern crate reqwest;
 extern crate chrono;
-use reqwest::multipart;
-use reqwest::Error;
+extern crate reqwest;
+
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use std::fs;
-use chrono::{NaiveDateTime};
 use std::env;
+use std::fs;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
@@ -37,9 +36,10 @@ pub struct StorageObject {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct GetResponse {
     http_code: u8,
-    message: String
+    message: String,
 }
 
 impl StorageZone {
@@ -54,18 +54,18 @@ impl StorageZone {
     ) -> Result<(), reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
-
+        // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
             .get(&request_url)
             .header("AccessKey", &self.api_key)
             .header("Accept", "application/json")
             .send()
             .await?;
-        if (response.status() == 200) {
+        if response.status() == 200 {
             let data = response.text().await?;
             fs::write(file_path, data).expect("Something went wrong writing the file");
         } else {
-            let data:GetResponse = response.json().await?;
+            let data: GetResponse = response.json().await?;
             println!("{:?}", data);
         }
         Ok(())
@@ -75,29 +75,28 @@ impl StorageZone {
         &self,
         file_path: &str,
         object_url: &str,
-    ) -> Result<(reqwest::StatusCode), reqwest::Error> {
+    ) -> Result<reqwest::StatusCode, reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         let pwd = env::current_dir().unwrap();
-        println!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
-
+        println!(
+            "request_url:{}, file_path:{}/{}",
+            request_url,
+            pwd.display(),
+            file_path
+        );
         let file_contents = fs::read(file_path).expect("Something went wrong reading the file");
-        let chunk = multipart::Part::bytes(file_contents);
-        let form = multipart::Form::new().part("chunk", chunk);
-
+        // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
             .put(&request_url)
             .header("AccessKey", &self.api_key)
-            .multipart(form)
+            .body(file_contents)
             .send()
             .await?;
         println!("{:?}", response.status());
         Ok(response.status())
     }
 
-    pub async fn delete(
-        &self,
-        object_url: &str,
-    ) -> Result<reqwest::StatusCode, reqwest::Error> {
+    pub async fn delete(&self, object_url: &str) -> Result<reqwest::StatusCode, reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
 
@@ -122,12 +121,12 @@ impl StorageZone {
             .await?;
         println!("response:\n\n{:?}", response.status());
         let status = response.status();
-        if (status == 200) {
+        if status == 200 {
             // {
             //     let data = &response.text().await?;
             //     println!("{:?}", data);
             // }
-            let data:Vec<Option<StorageObject>> = response.json().await?;
+            let data: Vec<Option<StorageObject>> = response.json().await?;
             println!("{:?}", data);
         } else {
             let data = response.text().await?;
