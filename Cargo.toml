@@ -1,10 +1,10 @@
 [package]
-name = "bunnycdn-storage"
+name = "bunnycdn"
 version = "0.1.0"
 authors = ["Sebastian Schmidt <publicarray@users.noreply.github.com>"]
 edition = "2018"
 license = "MIT"
-repository = "https://github.com/publicarray/bunnycdn-storage"
+repository = "https://github.com/publicarray/bunnycdn"
 description = """
 API for BunnyCDN storage buckets
 """

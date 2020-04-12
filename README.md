@@ -1,4 +1,6 @@
-# BunnyCDN Storage API 🐰
+# BunnyCDN lib 🐰
+
+Note: storage API is the only one implemented so far, others coming soon!
 
 ## Requirements
 
