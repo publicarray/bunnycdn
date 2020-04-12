@@ -1,10 +1,13 @@
 #![allow(unused)]
 
 extern crate reqwest;
+extern crate chrono;
 use reqwest::multipart;
 use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use chrono::{NaiveDateTime};
+use std::env;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
@@ -15,19 +18,28 @@ pub struct StorageZone {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct StorageObject {
-    guid: String,
-    user_id: String,
-    date_created: String,
-    last_changed: String,
-    storage_zone_name: String,
-    path: String,
-    object_name: String,
-    length: usize,
-    is_directory: bool,
-    server_id: String,
-    storage_zone_id: String,
-    full_path: String,
+    guid: Option<String>,
+    user_id: Option<String>,
+    date_created: Option<NaiveDateTime>,
+    last_changed: Option<NaiveDateTime>,
+    storage_zone_name: Option<String>,
+    path: Option<String>,
+    object_name: Option<String>,
+    length: Option<usize>,
+    is_directory: Option<bool>,
+    server_id: Option<usize>,
+    storage_zone_id: Option<usize>,
+    checksum: Option<String>,
+    replicated_zones: Option<String>,
+    full_path: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetResponse {
+    http_code: u8,
+    message: String
 }
 
 impl StorageZone {
@@ -35,13 +47,38 @@ impl StorageZone {
         StorageZone { name, api_key }
     }
 
-    pub async fn upload_file(
+    pub async fn download_file(
         &self,
         file_path: &str,
         object_url: &str,
     ) -> Result<(), reqwest::Error> {
-        let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
+        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
+
+        let response = reqwest::Client::new()
+            .get(&request_url)
+            .header("AccessKey", &self.api_key)
+            .header("Accept", "application/json")
+            .send()
+            .await?;
+        if (response.status() == 200) {
+            let data = response.text().await?;
+            fs::write(file_path, data).expect("Something went wrong writing the file");
+        } else {
+            let data:GetResponse = response.json().await?;
+            println!("{:?}", data);
+        }
+        Ok(())
+    }
+
+    pub async fn upload_file(
+        &self,
+        file_path: &str,
+        object_url: &str,
+    ) -> Result<(reqwest::StatusCode), reqwest::Error> {
+        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
+        let pwd = env::current_dir().unwrap();
+        println!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
 
         let file_contents = fs::read(file_path).expect("Something went wrong reading the file");
         let chunk = multipart::Part::bytes(file_contents);
@@ -53,51 +90,15 @@ impl StorageZone {
             .multipart(form)
             .send()
             .await?;
-        Ok(())
+        println!("{:?}", response.status());
+        Ok(response.status())
     }
 
-    pub async fn download_file(
-        &self,
-        file_path: &str,
-        object_url: &str,
-    ) -> Result<(), reqwest::Error> {
-        let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
-        println!("{}", request_url);
-
-        let data = reqwest::Client::new()
-            .get(&request_url)
-            .header("AccessKey", &self.api_key)
-            .send()
-            .await?
-            .text()
-            .await?;
-        fs::write(file_path, data).expect("Something went wrong writing the file");
-        Ok(())
-    }
-
-    pub async fn get_objects(
-        &self,
-        directory_url: &str,
-    ) -> Result<StorageObject, reqwest::Error> {
-        let request_url = format!("SERVER_URL/{}/{}", self.name, directory_url);
-        println!("{}", request_url);
-
-        let storage_object: StorageObject = reqwest::Client::new()
-            .get(&request_url)
-            .header("AccessKey", &self.api_key)
-            .send()
-            .await?
-            .json()
-            .await?;
-        println!("storage_object:\n\n{:?}", storage_object);
-        Ok(storage_object)
-    }
-
-    pub async fn delete_object(
+    pub async fn delete(
         &self,
         object_url: &str,
-    ) -> Result<reqwest::Response, reqwest::Error> {
-        let request_url = format!("SERVER_URL/{}/{}", self.name, object_url);
+    ) -> Result<reqwest::StatusCode, reqwest::Error> {
+        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
 
         let response = reqwest::Client::new()
@@ -105,6 +106,34 @@ impl StorageZone {
             .header("AccessKey", &self.api_key)
             .send()
             .await?;
-        Ok(response)
+        println!("{:?}", response.status());
+        Ok(response.status())
+    }
+
+    pub async fn get_objects(&self, directory_url: &str) -> Result<(), reqwest::Error> {
+        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, directory_url);
+        println!("{}", request_url);
+
+        let response = reqwest::Client::new()
+            .get(&request_url)
+            .header("AccessKey", &self.api_key)
+            .header("Accept", "application/json")
+            .send()
+            .await?;
+        println!("response:\n\n{:?}", response.status());
+        let status = response.status();
+        if (status == 200) {
+            // {
+            //     let data = &response.text().await?;
+            //     println!("{:?}", data);
+            // }
+            let data:Vec<Option<StorageObject>> = response.json().await?;
+            println!("{:?}", data);
+        } else {
+            let data = response.text().await?;
+            println!("{} - {:?}", status, data);
+        }
+
+        Ok(())
     }
 }
