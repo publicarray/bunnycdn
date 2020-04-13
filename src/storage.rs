@@ -35,9 +35,33 @@ pub struct StorageObject {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct GetResponse {
-    http_code: u8,
+#[derive(Default)]
+pub struct BunnyResponse {
+    http_code: u16,
     message: String,
+}
+
+#[derive(Debug)]
+pub enum ResponseData {
+    StorageInfo(Vec<Option<StorageObject>>),
+    BunnyStatus(BunnyResponse),
+    HttpStatus(reqwest::StatusCode),
+}
+
+impl ResponseData {
+    pub fn print(&self) {
+        match self {
+            ResponseData::StorageInfo(storage) => {
+                println!("{:?}", storage);
+            }
+            ResponseData::HttpStatus(status) => {
+                println!("{}", status);
+            }
+            ResponseData::BunnyStatus(status) => {
+                println!("{:?}", status);
+            }
+        }
+    }
 }
 
 impl StorageZone {
@@ -49,7 +73,7 @@ impl StorageZone {
         &self,
         file_path: &str,
         object_url: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
@@ -59,21 +83,27 @@ impl StorageZone {
             .header("Accept", "application/json")
             .send()
             .await?;
-        if response.status() == 200 {
+
+        let http_status = response.status();
+        let mut response_data = ResponseData::HttpStatus(http_status);
+        if http_status.as_u16() == 200 {
             let data = response.text().await?;
             fs::write(file_path, data)?;
-        } else {
-            let data: GetResponse = response.json().await?;
-            println!("{:?}", data);
         }
-        Ok(())
+        // Rely on http status codes than to phrase the json response. codes are the same
+        // } else {
+        //     println!("{:?}", http_status);
+        //     let json_response: BunnyResponse = response.json().await?;
+        //     response_data = ResponseData::BunnyStatus(json_response);
+        // }
+        Ok(response_data)
     }
 
     pub async fn upload_file(
         &self,
         file_path: &str,
         object_url: &str,
-    ) -> Result<reqwest::StatusCode, Box<dyn Error>> {
+    ) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         let pwd = env::current_dir().unwrap();
         println!(
@@ -90,11 +120,16 @@ impl StorageZone {
             .body(file_contents)
             .send()
             .await?;
-        println!("{:?}", response.status());
-        Ok(response.status())
+
+        let http_status = response.status();
+        let response_data = ResponseData::HttpStatus(http_status);
+        if http_status.as_u16() == 201 {
+            println!("{:?}", "upload successful");
+        }
+        Ok(response_data)
     }
 
-    pub async fn delete(&self, object_url: &str) -> Result<reqwest::StatusCode, reqwest::Error> {
+    pub async fn delete(&self, object_url: &str) -> Result<ResponseData, reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
 
@@ -103,11 +138,16 @@ impl StorageZone {
             .header("AccessKey", &self.api_key)
             .send()
             .await?;
-        println!("{:?}", response.status());
-        Ok(response.status())
+
+        let response_data = ResponseData::HttpStatus(response.status());
+        // response_data.canonical_reason()
+        // let json_response = BunnyResponse {http_code:http_status.as_u16(), Some(message:http_status.canonical_reason()).to_string()};
+
+        // println!("{:?}", response_data.HttpStatus.as_u16());
+        Ok(response_data)
     }
 
-    pub async fn get_objects(&self, directory_url: &str) -> Result<(), reqwest::Error> {
+    pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, directory_url);
         println!("{}", request_url);
 
@@ -117,15 +157,28 @@ impl StorageZone {
             .header("Accept", "application/json")
             .send()
             .await?;
-        println!("response:\n\n{:?}", response.status());
-        let status = response.status();
-        if status == 200 {
-            let data: Vec<Option<StorageObject>> = response.json().await?;
-            println!("{:?}", data);
+
+        let http_status = response.status();
+        // let mut data = ResponseData::BunnyStatus(BunnyResponse {http_code:http_status.as_u16(), ..Default::default()});
+        let mut response_data = ResponseData::HttpStatus(http_status);
+        // let json_response = BunnyResponse {http_code:http_status.as_u16(), message:"".to_string()};
+        if http_status.as_u16() == 200 {
+            let data: Vec<Option<StorageObject>> = response
+                .json()
+                .await
+                .expect("Please select a directory not a file!");
+            // let data = response.text().await?;
+            // println!("{:?}", data);
+            response_data = ResponseData::StorageInfo(data);
+            println!("{:?}", response_data);
+        } else if http_status.as_u16() == 404 {
+            let data: BunnyResponse = response.json().await?;
+            response_data = ResponseData::BunnyStatus(data);
+            println!("{:?}", response_data);
         } else {
             let data = response.text().await?;
-            println!("{} - {:?}", status, data);
+            println!("{} - {:?}", http_status, data);
         }
-        Ok(())
+        Ok(response_data)
     }
 }
