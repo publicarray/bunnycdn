@@ -69,11 +69,7 @@ impl StorageZone {
         StorageZone { name, api_key }
     }
 
-    pub async fn download_file(
-        &self,
-        file_path: &str,
-        object_url: &str,
-    ) -> Result<ResponseData, Box<dyn Error>> {
+    pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         println!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
@@ -99,19 +95,10 @@ impl StorageZone {
         Ok(response_data)
     }
 
-    pub async fn upload_file(
-        &self,
-        file_path: &str,
-        object_url: &str,
-    ) -> Result<ResponseData, Box<dyn Error>> {
+    pub async fn upload_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         let pwd = env::current_dir().unwrap();
-        println!(
-            "request_url:{}, file_path:{}/{}",
-            request_url,
-            pwd.display(),
-            file_path
-        );
+        println!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
         let file_contents = fs::read(file_path)?;
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
@@ -163,10 +150,8 @@ impl StorageZone {
         let mut response_data = ResponseData::HttpStatus(http_status);
         // let json_response = BunnyResponse {http_code:http_status.as_u16(), message:"".to_string()};
         if http_status.as_u16() == 200 {
-            let data: Vec<Option<StorageObject>> = response
-                .json()
-                .await
-                .expect("Please select a directory not a file!");
+            let data: Vec<Option<StorageObject>> =
+                response.json().await.expect("Please select a directory not a file!");
             // let data = response.text().await?;
             // println!("{:?}", data);
             response_data = ResponseData::StorageInfo(data);

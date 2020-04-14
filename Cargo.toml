@@ -3,12 +3,15 @@ name = "bunnycdn"
 version = "0.1.0"
 authors = ["Sebastian Schmidt <publicarray@users.noreply.github.com>"]
 edition = "2018"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/publicarray/bunnycdn"
 description = "API for BunnyCDN 🐰"
 
 [dependencies]
-reqwest = { version = "0.10", features = ["json"] }
+# HTTP client
+reqwest = { version = "0.10", features = ["blocking", "json"] }
+# A generic serialization/deserialization framework
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
+# Async
 tokio = { version = "0.2.0", features = ["macros", "net", "rt-util"] }
