@@ -8,7 +8,7 @@ use std::fs;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct StorageZone {
     pub name: String,
     api_key: String,
