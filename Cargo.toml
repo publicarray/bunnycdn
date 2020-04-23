@@ -15,3 +15,5 @@ serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 # Async
 tokio = { version = "0.2.0", features = ["macros", "net", "rt-util"] }
+#logging
+log = "0.4"

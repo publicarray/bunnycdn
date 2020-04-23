@@ -52,13 +52,13 @@ impl ResponseData {
     pub fn print(&self) {
         match self {
             ResponseData::StorageInfo(storage) => {
-                println!("{:?}", storage);
+                info!("{:?}", storage);
             }
             ResponseData::HttpStatus(status) => {
-                println!("{}", status);
+                info!("{}", status);
             }
             ResponseData::BunnyStatus(status) => {
-                println!("{:?}", status);
+                info!("{:?}", status);
             }
         }
     }
@@ -71,7 +71,7 @@ impl StorageZone {
 
     pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
-        println!("{}", request_url);
+        // info!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
             .get(&request_url)
@@ -88,7 +88,7 @@ impl StorageZone {
         }
         // Rely on http status codes than to phrase the json response. codes are the same
         // } else {
-        //     println!("{:?}", http_status);
+        //     info!("{:?}", http_status);
         //     let json_response: BunnyResponse = response.json().await?;
         //     response_data = ResponseData::BunnyStatus(json_response);
         // }
@@ -98,7 +98,7 @@ impl StorageZone {
     pub async fn upload_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         let pwd = env::current_dir().unwrap();
-        println!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
+        // info!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
         let file_contents = fs::read(file_path)?;
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
@@ -111,14 +111,14 @@ impl StorageZone {
         let http_status = response.status();
         let response_data = ResponseData::HttpStatus(http_status);
         if http_status.as_u16() == 201 {
-            println!("{:?}", "upload successful");
+            info!("{:?}", "upload successful");
         }
         Ok(response_data)
     }
 
     pub async fn delete(&self, object_url: &str) -> Result<ResponseData, reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
-        println!("{}", request_url);
+        // info!("{}", request_url);
 
         let response = reqwest::Client::new()
             .delete(&request_url)
@@ -130,13 +130,13 @@ impl StorageZone {
         // response_data.canonical_reason()
         // let json_response = BunnyResponse {http_code:http_status.as_u16(), Some(message:http_status.canonical_reason()).to_string()};
 
-        // println!("{:?}", response_data.HttpStatus.as_u16());
+        // info!("{:?}", response_data.HttpStatus.as_u16());
         Ok(response_data)
     }
 
     pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, reqwest::Error> {
         let request_url = format!("{}/{}/{}", SERVER_URL, self.name, directory_url);
-        println!("{}", request_url);
+        // info!("{}", request_url);
 
         let response = reqwest::Client::new()
             .get(&request_url)
@@ -153,16 +153,16 @@ impl StorageZone {
             let data: Vec<Option<StorageObject>> =
                 response.json().await.expect("Please select a directory not a file!");
             // let data = response.text().await?;
-            // println!("{:?}", data);
+            // info!("{:?}", data);
             response_data = ResponseData::StorageInfo(data);
-            println!("{:?}", response_data);
+            info!("{:?}", response_data);
         } else if http_status.as_u16() == 404 {
             let data: BunnyResponse = response.json().await?;
             response_data = ResponseData::BunnyStatus(data);
-            println!("{:?}", response_data);
+            info!("{:?}", response_data);
         } else {
             let data = response.text().await?;
-            println!("{} - {:?}", http_status, data);
+            info!("{} - {:?}", http_status, data);
         }
         Ok(response_data)
     }
