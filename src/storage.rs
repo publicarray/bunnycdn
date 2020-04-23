@@ -1,6 +1,7 @@
 #![allow(unused)]
 // #![deny(missing_docs)]
-use chrono::NaiveDateTime;
+use chrono::{Utc,DateTime};
+// use chrono::NativeDateTime;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
@@ -20,8 +21,12 @@ pub struct StorageZone {
 pub struct StorageObject {
     guid: Option<String>,
     user_id: Option<String>,
-    date_created: Option<NaiveDateTime>,
-    last_changed: Option<NaiveDateTime>,
+    // date_created: Option<DateTime::<Utc>>,
+    // date_created: Option<NativeDateTime>,
+    date_created: Option<String>,
+    // last_changed: Option<DateTime::<Utc>>,
+    // last_changed: Option<NativeDateTime>,
+    last_changed: Option<String>,
     storage_zone_name: Option<String>,
     path: Option<String>,
     object_name: Option<String>,
@@ -147,7 +152,7 @@ impl StorageZone {
         Ok(response_data)
     }
 
-    pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, reqwest::Error> {
+    pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, directory_url);
         trace!("{:?}", request_url);
 
@@ -159,15 +164,21 @@ impl StorageZone {
             .await?;
 
         let http_status = response.status();
+        trace!("{}", http_status);
+        // println!("{}", http_status);
+
         // let mut data = ResponseData::BunnyStatus(BunnyResponse {http_code:http_status.as_u16(), ..Default::default()});
         let mut response_data = ResponseData::HttpStatus(http_status);
         // let json_response = BunnyResponse {http_code:http_status.as_u16(), message:"".to_string()};
         if http_status.as_u16() == 200 {
-            let data: Vec<Option<StorageObject>> =
-                response.json().await.expect("Please select a directory not a file!");
-            // let data = response.text().await?;
+            // let data: Vec<Option<StorageObject>> =
+            //     response.json().await.expect("Can't parse JSON! Make sure to select a directory not a file!");
+            let data = response.text().await?;
+            trace!("{:?}", data);
             // println!("{:?}", data);
-            // trace!("{:?}", data);
+            let data = serde_json::from_str::<Vec<Option<StorageObject>>>(&data).expect("Can't parse JSON! Make sure to select a directory not a file!");
+            trace!("{:?}", data);
+            // println!("{:?}", data);
             response_data = ResponseData::StorageInfo(data);
             trace!("{:?}", response_data);
         } else if http_status.as_u16() == 404 {
