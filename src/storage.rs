@@ -83,8 +83,8 @@ impl StorageZone {
     }
 
     pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
-        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         // info!("{}", request_url);
+        let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
             .get(&request_url)
@@ -130,8 +130,8 @@ impl StorageZone {
     }
 
     pub async fn delete(&self, object_url: &str) -> Result<ResponseData, reqwest::Error> {
-        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
         // info!("{}", request_url);
+        let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
 
         let response = reqwest::Client::new()
             .delete(&request_url)
@@ -148,8 +148,8 @@ impl StorageZone {
     }
 
     pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, reqwest::Error> {
-        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, directory_url);
         // info!("{}", request_url);
+        let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, directory_url);
 
         let response = reqwest::Client::new()
             .get(&request_url)
