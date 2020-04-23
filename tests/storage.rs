@@ -1,7 +1,7 @@
 #[cfg(test)]
 
 mod tests {
-    use bunnycdn::storage::{StorageZone};
+    use bunnycdn::storage::{ResponseData, StorageZone};
     use tokio::runtime::{Builder, Runtime};
 
     fn rt() -> Runtime {
@@ -9,10 +9,8 @@ mod tests {
     }
 
     fn sz() -> StorageZone {
-        StorageZone::new(
-            "testfiles".to_string(),
-            "".to_string(),
-        ).set_api_endpoint("https://private-anon-b7dd339e69-bunnycdnstorage.apiary-mock.com")
+        StorageZone::new("testfiles".to_string(), "".to_string())
+            .set_api_endpoint("https://private-anon-b7dd339e69-bunnycdnstorage.apiary-mock.com")
     }
 
     #[test]
@@ -28,7 +26,22 @@ mod tests {
 
         // let so: StorageObject = rt.block_on(sz.get_objects("/")).unwrap();
         // println!("{:?}", so);
-        let _response = rt.block_on(sz.get_objects("")).unwrap();
+        let _response = rt.block_on(sz.get_objects("%2F")).unwrap();
+        // assert!(StatusCode::OK.is_success());
+    }
+
+    #[test]
+    fn get_objects_404() {
+        let mut rt = rt();
+        let sz = sz();
+
+        let response = rt.block_on(sz.get_objects("")).unwrap();
+        println!("{:?}", response);
+        let status_code = match response {
+            ResponseData::HttpStatus(reqwest::StatusCode::NOT_FOUND) => 404,
+            _ => 1,
+        };
+        assert_eq!(status_code, 404);
     }
 
     #[test]
@@ -44,7 +57,9 @@ mod tests {
         let mut rt = rt();
         let sz = sz();
 
-        let _statuscode = rt.block_on(sz.download_file("tests/300kb.jpg", "/testfiles/images/300kb.jpg")).unwrap();
+        let _statuscode = rt
+            .block_on(sz.download_file("tests/300kb.jpg", "/testfiles/images/300kb.jpg"))
+            .unwrap();
         // TODO assert return status
     }
 

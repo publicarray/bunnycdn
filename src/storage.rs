@@ -1,5 +1,5 @@
 #![allow(unused)]
-
+// #![deny(missing_docs)]
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -83,8 +83,8 @@ impl StorageZone {
     }
 
     pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
-        // info!("{}", request_url);
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
+        trace!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
             .get(&request_url)
@@ -111,7 +111,7 @@ impl StorageZone {
     pub async fn upload_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         let pwd = env::current_dir().unwrap();
-        // info!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
+        trace!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
         let file_contents = fs::read(file_path)?;
         // todo do this in chunks/ don't put whole file into memory
         let response = reqwest::Client::new()
@@ -130,8 +130,8 @@ impl StorageZone {
     }
 
     pub async fn delete(&self, object_url: &str) -> Result<ResponseData, reqwest::Error> {
-        // info!("{}", request_url);
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
+        trace!("{}", request_url);
 
         let response = reqwest::Client::new()
             .delete(&request_url)
@@ -148,8 +148,8 @@ impl StorageZone {
     }
 
     pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, reqwest::Error> {
-        // info!("{}", request_url);
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, directory_url);
+        trace!("{:?}", request_url);
 
         let response = reqwest::Client::new()
             .get(&request_url)
@@ -166,16 +166,19 @@ impl StorageZone {
             let data: Vec<Option<StorageObject>> =
                 response.json().await.expect("Please select a directory not a file!");
             // let data = response.text().await?;
-            // info!("{:?}", data);
+            // println!("{:?}", data);
+            // trace!("{:?}", data);
             response_data = ResponseData::StorageInfo(data);
-            info!("{:?}", response_data);
+            trace!("{:?}", response_data);
         } else if http_status.as_u16() == 404 {
-            let data: BunnyResponse = response.json().await?;
-            response_data = ResponseData::BunnyStatus(data);
-            info!("{:?}", response_data);
+            response_data = match response.json().await {
+                Ok(data) => ResponseData::BunnyStatus(data), // return json if there is any
+                Err(e) => response_data,                     // return HTTP status code
+            };
+            trace!("{:?}", response_data);
         } else {
             let data = response.text().await?;
-            info!("{} - {:?}", http_status, data);
+            trace!("{} - {:?}", http_status, data);
         }
         Ok(response_data)
     }
