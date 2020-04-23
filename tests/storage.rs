@@ -28,13 +28,13 @@ mod tests {
 
         let data = match response {
             ResponseData::StorageInfo(data) => data,
-            _ => Vec::new()
+            _ => Vec::new(),
         };
 
         if let Some(d) = data.get(0).unwrap() {
             if let Some(guid) = &d.guid {
                 assert_eq!(guid, "d6445d80-a797-4535-bf0e-d3819bcdf928");
-                return
+                return;
             }
         }
         assert!(false);
@@ -48,7 +48,7 @@ mod tests {
         let response = rt.block_on(sz.get_objects("")).unwrap();
         let status_code = match response {
             ResponseData::HttpStatus(hs) => hs,
-            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR,
         };
         assert_eq!(status_code.as_u16(), 404);
     }
@@ -61,7 +61,7 @@ mod tests {
         let response = rt.block_on(sz.upload_file("tests/test.txt", "test.txt")).unwrap();
         let status_code = match response {
             ResponseData::HttpStatus(hs) => hs,
-            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR,
         };
         assert_eq!(status_code.as_u16(), 201); // upload successful
     }
@@ -76,7 +76,7 @@ mod tests {
             .unwrap();
         let status_code = match response {
             ResponseData::HttpStatus(hs) => hs,
-            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR,
         };
         assert_eq!(status_code.as_u16(), 200);
     }
@@ -89,7 +89,7 @@ mod tests {
         let response = rt.block_on(sz.delete("/images/300kb.jpg")).unwrap();
         let status_code = match response {
             ResponseData::HttpStatus(hs) => hs,
-            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR,
         };
         assert_eq!(status_code.as_u16(), 200);
     }
