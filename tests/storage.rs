@@ -24,6 +24,7 @@ mod tests {
         let mut rt = rt();
         let sz = sz();
 
+        // curl --include --header "Accept: application/json" 'https://private-anon-b7dd339e69-bunnycdnstorage.apiary-mock.com/testfiles/%2F/'
         let response = rt.block_on(sz.get_objects("%2F")).unwrap();
 
         let data = match response {
@@ -44,7 +45,7 @@ mod tests {
     fn get_objects_404() {
         let mut rt = rt();
         let sz = sz();
-
+        // curl --include --header "Accept: application/json" 'https://private-anon-b7dd339e69-bunnycdnstorage.apiary-mock.com/testfiles
         let response = rt.block_on(sz.get_objects("")).unwrap();
         let status_code = match response {
             ResponseData::HttpStatus(hs) => hs,
