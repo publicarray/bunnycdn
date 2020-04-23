@@ -95,6 +95,7 @@ impl StorageZone {
             .get(&request_url)
             .header("AccessKey", &self.api_key)
             .header("Accept", "application/json")
+            .header("Accept-Encoding", "gzip, br")
             .send()
             .await?;
 
@@ -122,6 +123,7 @@ impl StorageZone {
         let response = reqwest::Client::new()
             .put(&request_url)
             .header("AccessKey", &self.api_key)
+            .header("Accept-Encoding", "gzip, br")
             .body(file_contents)
             .send()
             .await?;
@@ -141,6 +143,7 @@ impl StorageZone {
         let response = reqwest::Client::new()
             .delete(&request_url)
             .header("AccessKey", &self.api_key)
+            .header("Accept-Encoding", "gzip, br")
             .send()
             .await?;
 
@@ -160,6 +163,7 @@ impl StorageZone {
             .get(&request_url)
             .header("AccessKey", &self.api_key)
             .header("Accept", "application/json")
+            .header("Accept-Encoding", "gzip, br")
             .send()
             .await?;
 
