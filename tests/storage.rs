@@ -36,7 +36,6 @@ mod tests {
         let sz = sz();
 
         let response = rt.block_on(sz.get_objects("")).unwrap();
-        println!("{:?}", response);
         let status_code = match response {
             ResponseData::HttpStatus(reqwest::StatusCode::NOT_FOUND) => 404,
             _ => 1,
