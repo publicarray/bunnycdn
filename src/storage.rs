@@ -10,7 +10,8 @@ const SERVER_URL: &str = "https://storage.bunnycdn.com";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StorageZone {
-    pub name: String,
+    api_endpoint: String,
+    name: String,
     api_key: String,
 }
 
@@ -66,7 +67,19 @@ impl ResponseData {
 
 impl StorageZone {
     pub fn new(name: String, api_key: String) -> Self {
-        StorageZone { name, api_key }
+        StorageZone {
+            name,
+            api_key,
+            api_endpoint: SERVER_URL.to_string(),
+        }
+    }
+
+    pub fn set_api_endpoint(mut self, api_endpoint: &str) -> Self {
+        self.api_endpoint = api_endpoint.to_string();
+        self
+    }
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
@@ -96,7 +109,7 @@ impl StorageZone {
     }
 
     pub async fn upload_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
-        let request_url = format!("{}/{}/{}", SERVER_URL, self.name, object_url);
+        let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         let pwd = env::current_dir().unwrap();
         // info!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
         let file_contents = fs::read(file_path)?;
