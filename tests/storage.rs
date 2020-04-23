@@ -24,10 +24,20 @@ mod tests {
         let mut rt = rt();
         let sz = sz();
 
-        // let so: StorageObject = rt.block_on(sz.get_objects("/")).unwrap();
-        // println!("{:?}", so);
-        let _response = rt.block_on(sz.get_objects("%2F")).unwrap();
-        // assert!(StatusCode::OK.is_success());
+        let response = rt.block_on(sz.get_objects("%2F")).unwrap();
+
+        let data = match response {
+            ResponseData::StorageInfo(data) => data,
+            _ => Vec::new()
+        };
+
+        if let Some(d) = data.get(0).unwrap() {
+            if let Some(guid) = &d.guid {
+                assert_eq!(guid, "d6445d80-a797-4535-bf0e-d3819bcdf928");
+                return
+            }
+        }
+        assert!(false);
     }
 
     #[test]
@@ -37,10 +47,10 @@ mod tests {
 
         let response = rt.block_on(sz.get_objects("")).unwrap();
         let status_code = match response {
-            ResponseData::HttpStatus(reqwest::StatusCode::NOT_FOUND) => 404,
-            _ => 1,
+            ResponseData::HttpStatus(hs) => hs,
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
         };
-        assert_eq!(status_code, 404);
+        assert_eq!(status_code.as_u16(), 404);
     }
 
     #[test]
@@ -48,7 +58,12 @@ mod tests {
         let mut rt = rt();
         let sz = sz();
 
-        let _statuscode = rt.block_on(sz.upload_file("tests/test.txt", "test.txt")).unwrap();
+        let response = rt.block_on(sz.upload_file("tests/test.txt", "test.txt")).unwrap();
+        let status_code = match response {
+            ResponseData::HttpStatus(hs) => hs,
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+        };
+        assert_eq!(status_code.as_u16(), 201); // upload successful
     }
 
     #[test]
@@ -56,10 +71,14 @@ mod tests {
         let mut rt = rt();
         let sz = sz();
 
-        let _statuscode = rt
-            .block_on(sz.download_file("tests/300kb.jpg", "/testfiles/images/300kb.jpg"))
+        let response = rt
+            .block_on(sz.download_file("tests/300kb.jpg", "/images/300kb.jpg"))
             .unwrap();
-        // TODO assert return status
+        let status_code = match response {
+            ResponseData::HttpStatus(hs) => hs,
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+        };
+        assert_eq!(status_code.as_u16(), 200);
     }
 
     #[test]
@@ -67,7 +86,11 @@ mod tests {
         let mut rt = rt();
         let sz = sz();
 
-        let _statuscode = rt.block_on(sz.delete("/testfiles/images/300kb.jpg")).unwrap();
-        // TODO assert return status
+        let response = rt.block_on(sz.delete("/images/300kb.jpg")).unwrap();
+        let status_code = match response {
+            ResponseData::HttpStatus(hs) => hs,
+            _ => reqwest::StatusCode::INTERNAL_SERVER_ERROR
+        };
+        assert_eq!(status_code.as_u16(), 200);
     }
 }
