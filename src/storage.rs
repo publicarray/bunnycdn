@@ -1,6 +1,6 @@
 #![allow(unused)]
 // #![deny(missing_docs)]
-use chrono::{Utc,DateTime};
+use chrono::{DateTime, Utc};
 // use chrono::NativeDateTime;
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -176,7 +176,8 @@ impl StorageZone {
             let data = response.text().await?;
             trace!("{:?}", data);
             // println!("{:?}", data);
-            let data = serde_json::from_str::<Vec<Option<StorageObject>>>(&data).expect("Can't parse JSON! Make sure to select a directory not a file!");
+            let data = serde_json::from_str::<Vec<Option<StorageObject>>>(&data)
+                .expect("Can't parse JSON! Make sure to select a directory not a file!");
             trace!("{:?}", data);
             // println!("{:?}", data);
             response_data = ResponseData::StorageInfo(data);
