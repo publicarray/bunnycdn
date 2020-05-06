@@ -2,9 +2,9 @@
 
 Thin Rust library around BunnyCDN's web API's 🐇
 
-* [] [BunnyCDN](https://bunnycdn.docs.apiary.io/)
+* [ ] [BunnyCDN](https://bunnycdn.docs.apiary.io/)
 * [x] [BunnyCDN Storage API](https://bunnycdnstorage.docs.apiary.io/)
-* [] [Logfiles](https://support.bunnycdn.com/hc/en-us/articles/360018952591-How-do-I-download-my-logs-via-the-API-)
+* [ ] [Logfiles](https://support.bunnycdn.com/hc/en-us/articles/360018952591-How-do-I-download-my-logs-via-the-API-)
 
 Note: storage API is the only one implemented so far, others coming soon!
 
