@@ -1,15 +1,28 @@
 # BunnyCDN lib 🐰
 
+Thin Rust library around BunnyCDN's web API's 🐇
+
+* [] [BunnyCDN](https://bunnycdn.docs.apiary.io/)
+* [x] [BunnyCDN Storage API](https://bunnycdnstorage.docs.apiary.io/)
+* [] [Logfiles](https://support.bunnycdn.com/hc/en-us/articles/360018952591-How-do-I-download-my-logs-via-the-API-)
+
 Note: storage API is the only one implemented so far, others coming soon!
+
+## Terminal CLI
+
+[bunnycli](https://github.com/publicarray/bunnycli)
 
 ## Requirements
 
- 1. Have a bunnyCDN account
+ 1. Have a BunnyCDN account
  2. An API Key. You can find this in our Dashboard in the My Account section.
  3. A Storage API key, You can find this in our Storage Zone, the FTP password is the API Key.
 
+## Usage in Cargo.toml
+
+```toml
+[dependencies]
+bunnycdn = "0.1"
+```
+
 This is my first crate, please be gentle
-
-https://bunnycdn.docs.apiary.io/#
-
-https://bunnycdnstorage.docs.apiary.io/
