@@ -1,11 +1,11 @@
 [package]
 name = "bunnycdn"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Sebastian Schmidt <publicarray@users.noreply.github.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/publicarray/bunnycdn"
-description = "API for BunnyCDN 🐰"
+description = "Wrapper Lib around BunnyCDN's web API 🐇"
 
 [dependencies]
 # HTTP client
@@ -17,5 +17,10 @@ serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 # Async
 tokio = { version = "0.2.0", features = ["macros", "net", "rt-util"] }
-#logging
+# logging
 log = "0.4"
+# errors
+anyhow = "1.0"
+
+[profile.release]
+lto = true

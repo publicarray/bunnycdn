@@ -1,51 +1,17 @@
 #![allow(unused)]
+
+use crate::serde_types::*;
+use crate::BunnyError;
+use anyhow::{anyhow, bail, Context, Result};
+use serde::{Deserialize, Serialize};
 // #![deny(missing_docs)]
 use chrono::{DateTime, Utc};
 // use chrono::NativeDateTime;
-use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
 use std::fs;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct StorageZone {
-    api_endpoint: String,
-    name: String,
-    api_key: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct StorageObject {
-    pub guid: Option<String>,
-    pub user_id: Option<String>,
-    // pub date_created: Option<DateTime::<Utc>>,
-    // pub date_created: Option<NativeDateTime>,
-    pub date_created: Option<String>,
-    // pub last_changed: Option<DateTime::<Utc>>,
-    // pub last_changed: Option<NativeDateTime>,
-    pub last_changed: Option<String>,
-    pub storage_zone_name: Option<String>,
-    pub path: Option<String>,
-    pub object_name: Option<String>,
-    pub length: Option<usize>,
-    pub is_directory: Option<bool>,
-    pub server_id: Option<usize>,
-    pub storage_zone_id: Option<usize>,
-    pub checksum: Option<String>,
-    pub replicated_zones: Option<String>,
-    pub full_path: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[derive(Default)]
-pub struct BunnyResponse {
-    http_code: u16,
-    message: String,
-}
 
 #[derive(Debug)]
 pub enum ResponseData {
@@ -70,6 +36,13 @@ impl ResponseData {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StorageZone {
+    api_endpoint: String,
+    name: String,
+    api_key: String,
+}
+
 impl StorageZone {
     pub fn new(name: String, api_key: String) -> Self {
         StorageZone {
@@ -87,7 +60,7 @@ impl StorageZone {
         self.name.clone()
     }
 
-    pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
+    pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         trace!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
@@ -114,7 +87,7 @@ impl StorageZone {
         Ok(response_data)
     }
 
-    pub async fn upload_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData, Box<dyn Error>> {
+    pub async fn upload_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         let pwd = env::current_dir().unwrap();
         trace!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
@@ -136,7 +109,7 @@ impl StorageZone {
         Ok(response_data)
     }
 
-    pub async fn delete(&self, object_url: &str) -> Result<ResponseData, reqwest::Error> {
+    pub async fn delete(&self, object_url: &str) -> Result<ResponseData> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         trace!("{}", request_url);
 
@@ -155,7 +128,7 @@ impl StorageZone {
         Ok(response_data)
     }
 
-    pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData, Box<dyn Error>> {
+    pub async fn get_objects(&self, directory_url: &str) -> Result<ResponseData> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, directory_url);
         trace!("{:?}", request_url);
 
