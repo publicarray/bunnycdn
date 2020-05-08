@@ -1,11 +1,10 @@
 #![allow(unused)]
-
+// #![deny(missing_docs)]
 use crate::serde_types::*;
 use crate::BunnyError;
 use anyhow::{anyhow, bail, Context, Result};
-use serde::{Deserialize, Serialize};
-// #![deny(missing_docs)]
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 // use chrono::NativeDateTime;
 use std::env;
 use std::error::Error;

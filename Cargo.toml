@@ -6,6 +6,11 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/publicarray/bunnycdn"
 description = "Wrapper Lib around BunnyCDN's web API 🐇"
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "README.md"
+]
 
 [dependencies]
 # HTTP client
@@ -20,6 +25,7 @@ tokio = { version = "0.2.0", features = ["macros", "net", "rt-util"] }
 # logging
 log = "0.4"
 # errors
+thiserror = "1.0"
 anyhow = "1.0"
 
 [profile.release]
