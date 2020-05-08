@@ -22,13 +22,18 @@ impl ResponseData {
     pub fn print(&self) {
         match self {
             ResponseData::StorageInfo(storage) => {
-                info!("{:?}", storage);
+                let json = serde_json::to_string(&storage).unwrap();
+                println!("{}", json);
             }
             ResponseData::HttpStatus(status) => {
-                info!("{}", status);
+                if !status.is_success() {
+                    error!("{}", status);
+                } else {
+                    println!("{}", status);
+                }
             }
             ResponseData::BunnyStatus(status) => {
-                info!("{:?}", status);
+                println!("{:?}", status);
             }
         }
     }
@@ -50,10 +55,11 @@ impl StorageZone {
         }
     }
 
-    pub fn set_api_endpoint(mut self, api_endpoint: &str) -> Self {
+    pub fn set_api_endpoint(&mut self, api_endpoint: &str) -> &Self {
         self.api_endpoint = api_endpoint.to_string();
         self
     }
+
     pub fn name(&self) -> String {
         self.name.clone()
     }
@@ -152,7 +158,7 @@ impl StorageZone {
             trace!("{:?}", data);
             // println!("{:?}", data);
             let data = serde_json::from_str::<Vec<Option<StorageObject>>>(&data)
-                .expect("Can't parse JSON! Make sure to select a directory not a file!");
+                .context("Can't parse JSON! Make sure to select a directory not a file")?;
             trace!("{:?}", data);
             // println!("{:?}", data);
             response_data = ResponseData::StorageInfo(data);
