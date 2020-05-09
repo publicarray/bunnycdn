@@ -1,12 +1,12 @@
 #![allow(unused)]
 // #![deny(missing_docs)]
 use crate::serde_types::*;
-use anyhow::{anyhow, bail, Context, Result};
-use chrono::{DateTime, Utc};
+use anyhow::{Context, Result};
+// use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 // use chrono::NativeDateTime;
 use std::env;
-use std::error::Error;
+// use std::error::Error;
 use std::fs;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
@@ -77,7 +77,7 @@ impl StorageZone {
             .await?;
 
         let http_status = response.status();
-        let mut response_data = ResponseData::HttpStatus(http_status);
+        let response_data = ResponseData::HttpStatus(http_status);
         if http_status.as_u16() == 200 {
             let data = response.text().await?;
             fs::write(file_path, data)?;
@@ -166,7 +166,7 @@ impl StorageZone {
         } else if http_status.as_u16() == 404 {
             response_data = match response.json().await {
                 Ok(data) => ResponseData::BunnyStatus(data), // return json if there is any
-                Err(e) => response_data,                     // return HTTP status code
+                Err(_) => response_data,                     // return HTTP status code
             };
             trace!("{:?}", response_data);
         } else {
