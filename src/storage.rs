@@ -22,7 +22,7 @@ impl ResponseData {
     pub fn print(&self) {
         match self {
             ResponseData::StorageInfo(storage) => {
-                let json = serde_json::to_string(&storage).unwrap();
+                let json = serde_json::to_string_pretty(&storage).unwrap();
                 println!("{}", json);
             }
             ResponseData::HttpStatus(status) => {
