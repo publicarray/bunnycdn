@@ -8,8 +8,10 @@ use serde::{Deserialize, Serialize};
 use std::env;
 // use std::error::Error;
 use std::fs;
+use super::APP_USER_AGENT;
 
 const SERVER_URL: &str = "https://storage.bunnycdn.com";
+const PROXY: &str = "http://127.0.0.1:8866";
 
 #[derive(Debug)]
 pub enum ResponseData {
@@ -46,6 +48,7 @@ pub struct StorageZone {
     api_key: String,
 }
 
+use reqwest::header;
 impl StorageZone {
     pub fn new(name: String, api_key: String) -> Self {
         StorageZone {
@@ -64,15 +67,27 @@ impl StorageZone {
         self.name.clone()
     }
 
+    /// convenience function - prepare request with common http headers, user-agent & proxy
+    fn client(&self) -> Result<reqwest::Client> {
+        let mut headers = header::HeaderMap::new();
+        // headers.insert(header::ACCEPT_ENCODING, header::HeaderValue::from_static("gzip, br")); // already set
+        let api_key = self.api_key.clone();
+        headers.insert("AccessKey", header::HeaderValue::from_str(&api_key).unwrap());
+
+        Ok(reqwest::Client::builder()
+            // .proxy(reqwest::Proxy::all(PROXY)?)
+            .user_agent(APP_USER_AGENT)
+            .default_headers(headers)
+            .build()?)
+    }
+
     pub async fn download_file(&self, file_path: &str, object_url: &str) -> Result<ResponseData> {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         trace!("{}", request_url);
         // todo do this in chunks/ don't put whole file into memory
-        let response = reqwest::Client::new()
+        let response = self.client()?
             .get(&request_url)
-            .header("AccessKey", &self.api_key)
             .header("Accept", "application/json")
-            .header("Accept-Encoding", "gzip, br")
             .send()
             .await?;
 
@@ -97,10 +112,8 @@ impl StorageZone {
         trace!("request_url:{}, file_path:{}/{}", request_url, pwd.display(), file_path);
         let file_contents = fs::read(file_path)?;
         // todo do this in chunks/ don't put whole file into memory
-        let response = reqwest::Client::new()
+        let response = self.client()?
             .put(&request_url)
-            .header("AccessKey", &self.api_key)
-            .header("Accept-Encoding", "gzip, br")
             .body(file_contents)
             .send()
             .await?;
@@ -117,10 +130,8 @@ impl StorageZone {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, object_url);
         trace!("{}", request_url);
 
-        let response = reqwest::Client::new()
+        let response = self.client()?
             .delete(&request_url)
-            .header("AccessKey", &self.api_key)
-            .header("Accept-Encoding", "gzip, br")
             .send()
             .await?;
 
@@ -136,11 +147,9 @@ impl StorageZone {
         let request_url = format!("{}/{}/{}", self.api_endpoint, self.name, directory_url);
         trace!("{:?}", request_url);
 
-        let response = reqwest::Client::new()
+        let response = self.client()?
             .get(&request_url)
-            .header("AccessKey", &self.api_key)
             .header("Accept", "application/json")
-            .header("Accept-Encoding", "gzip, br")
             .send()
             .await?;
 
