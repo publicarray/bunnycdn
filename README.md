@@ -25,4 +25,4 @@ Note: storage API is the only one implemented so far, others coming soon!
 bunnycdn = "0.1"
 ```
 
-Official PHP lib is here: https://github.com/cp6/BunnyCDN-API
+Other unofficial PHP lib is here: https://github.com/cp6/BunnyCDN-API
